@@ -5,6 +5,7 @@ class Game {
     private int rollsLeft; // 남은 주사위 굴리기 횟수
     private int[] scoreCard; // 점수 카드 배열
     private int[] recordCard; // 저장된 점수 카드
+    private boolean scoreSubmitted; // 점수 제출 여부 (한 턴에 한 번)
 
     public Game() {
         dice = new Dice[5];
@@ -16,6 +17,7 @@ class Game {
         recordCard = new int[15];
         Arrays.fill(scoreCard, 0); // 모든 값 0으로 초기화
         Arrays.fill(recordCard, 0);
+        scoreSubmitted = false; // 초기화 시 점수 제출 여부 false
     }
 
 
@@ -48,6 +50,7 @@ class Game {
             }
         }
         rollsLeft--; // 주사위 굴린 횟수 차감
+        scoreSubmitted = false; // 주사위를 굴렸으므로 점수 제출 가능
     }
 
     // 점수 계산 메서드
@@ -119,6 +122,16 @@ class Game {
             }
         }
         return false; // 조건에 맞는 연속이 없으면 false 반환
+    }
+
+    // 점수 제출 여부 확인
+    public boolean isScoreSubmitted() {
+        return scoreSubmitted;
+    }
+
+    // 점수 제출 여부 설정
+    public void setScoreSubmitted(boolean submitted) {
+        scoreSubmitted = submitted;
     }
 
     // 턴을 리셋하는 메서드

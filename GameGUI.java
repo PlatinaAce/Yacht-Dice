@@ -242,6 +242,11 @@ public class GameGUI {
 
     // 점수 제출 함수
     private void submitScore() {
+        if (game.isScoreSubmitted()) { // 점수를 제출했는데 또 제출하려는지 확인
+            JOptionPane.showMessageDialog(frame, "You already submitted the score.");
+            return;
+        }
+
         int selectedRow = scoreCardTable.getSelectedRow(); // 선택된 행
         int selectedColumn = scoreCardTable.getSelectedColumn(); // 선택된 열
 
@@ -289,6 +294,8 @@ public class GameGUI {
             }
         }
         updateScoreTable(); // 초기화된 점수표 갱신
+
+        game.setScoreSubmitted(true); // 점수 제출 상태를 true로 설정
 
         game.resetTurn(); // 턴 리셋
         updateDiceImages(true); // dice0 이미지로 초기화
