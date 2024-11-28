@@ -1,36 +1,39 @@
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 public class LobbyServer {
+    private static final int PORT = 12345; // 서버 포트
+    private static List<ClientHandler> clients = new ArrayList<>(); // 클라이언트 목록
+
     public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(12345)) {
-            System.out.println("Server is running...");
-
-            // 첫 번째 클라이언트 연결
-            Socket client1 = serverSocket.accept();
-            PrintWriter out1 = new PrintWriter(client1.getOutputStream(), true);
-            BufferedReader in1 = new BufferedReader(new InputStreamReader(client1.getInputStream()));
-            String username1 = in1.readLine();
-            System.out.println("Client 1 connected: " + username1);
-            out1.println("Waiting for another player...");
-
-            // 두 번째 클라이언트 연결
-            Socket client2 = serverSocket.accept();
-            PrintWriter out2 = new PrintWriter(client2.getOutputStream(), true);
-            BufferedReader in2 = new BufferedReader(new InputStreamReader(client2.getInputStream()));
-            String username2 = in2.readLine();
-            System.out.println("Client 2 connected: " + username2);
-            out2.println("Waiting for another player...");
-
-            // 게임 시작 메시지 전송
-            out1.println("Game is starting! You are now playing with " + username2);
-            out2.println("Game is starting! You are now playing with " + username1);
-
-            // 소켓 닫기 (테스트용)
-            client1.close();
-            client2.close();
+        System.out.println("Lobby Server is starting...");
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            while (true) {
+                Socket clientSocket = serverSocket.accept(); // 클라이언트 연결 대기
+                ClientHandler clientHandler = new ClientHandler(clientSocket); // ClientHandler 사용
+                clients.add(clientHandler);
+                clientHandler.start();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    // 모든 클라이언트에게 메시지 브로드캐스트
+    static synchronized void broadcast(String message, ClientHandler excludeClient) {
+        for (ClientHandler client : clients) {
+            if (client != excludeClient) {
+                client.sendMessage(message);
+            }
+        }
+    }
+
+    // 클라이언트 제거
+    static synchronized void removeClient(ClientHandler client) {
+        clients.remove(client);
+    }
 }
+
+
+

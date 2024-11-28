@@ -4,8 +4,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.PrintWriter;
 
-public class GameGUI {
+public class MultiGameGUI {
     private JFrame frame;
     private JLabel[] diceLabels;
     private JButton rollButton, submitScoreButton;
@@ -15,8 +17,16 @@ public class GameGUI {
     private JTable scoreCardTable;
     private DefaultTableModel tableModel;
     private boolean[] scoresLocked;
-
-    public GameGUI() {
+    private JLabel playerNameLabel, opponentNameLabel; // 이름을 표시할 레이블
+    private String playerName = "";
+    private String opponentName = "";
+    private boolean isMyTurn = false;  // 내 차례인지 여부를 나타내는 변수
+    private String playerRole = ""; // 현재 유저가 P1인지 P2인지 구분할 변수
+    private PrintWriter out;
+    private BufferedReader in;
+    public MultiGameGUI(BufferedReader in , PrintWriter out) {
+        this.in = in;
+        this.out = out;
         game = new Game();
         scoresLocked = new boolean[15]; // 점수 잠금 배열
         scoresLocked[6] = true;
@@ -31,6 +41,16 @@ public class GameGUI {
         frame.setSize(900, 450);
         frame.setLayout(new BorderLayout());
 
+        // 상대방 이름 표시(이름이 잘 나오는 지 테스트용으로)
+        opponentNameLabel = new JLabel("Opponent: " + opponentName, SwingConstants.CENTER);
+        opponentNameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        frame.add(opponentNameLabel, BorderLayout.NORTH); // 상단에 상대방 이름 표시(잘 나오는 지 테스트용으로)
+
+        // 내 이름 표시
+        playerNameLabel = new JLabel("ME: " + "YourName", SwingConstants.CENTER);
+        playerNameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        frame.add(playerNameLabel, BorderLayout.SOUTH); // 하단에 내 이름 표시
+
         // Control Panel (Roll Dice, Submit Score, Rolls Left)
         JPanel controlPanel = createControlPanel();
 
@@ -43,14 +63,22 @@ public class GameGUI {
         rollButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                rollDice(); // 주사위 굴리기 함수 호출
+                if (canPerformAction()) {
+                    rollDice();
+                } else {
+                    JOptionPane.showMessageDialog(frame, "It's not your turn!");
+                }
             }
         });
 
         submitScoreButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                submitScore(); // 점수 제출 함수 호출
+                if (canPerformAction()) {
+                    submitScore();
+                } else {
+                    JOptionPane.showMessageDialog(frame, "It's not your turn!");
+                }
             }
         });
 
@@ -60,8 +88,15 @@ public class GameGUI {
 
         // 초기 주사위 이미지를 dice0.png로 표시
         updateDiceImages(true);
+        updateTurnIndicator();
+        updateButtonState();
 
         frame.setVisible(true); // 프레임을 화면에 표시
+    }
+
+    private boolean canPerformAction() {
+        return (game.getCurrentTurn() == 0 && playerRole.equals("P1")) ||
+                (game.getCurrentTurn() == 1 && playerRole.equals("P2"));
     }
 
     // 버튼 패널 설정
@@ -75,6 +110,37 @@ public class GameGUI {
         controlPanel.add(rollsLeftLabel);
 
         return controlPanel;
+    }
+
+    private void updateTurnIndicator() {
+        if (game.getCurrentTurn() == 0) {
+            playerNameLabel.setForeground(Color.RED);
+            opponentNameLabel.setForeground(Color.BLACK);
+        } else {
+            playerNameLabel.setForeground(Color.BLACK);
+            opponentNameLabel.setForeground(Color.RED);
+        }
+
+        String currentPlayer = (game.getCurrentTurn() == 0) ? "P1" : "P2";
+        frame.setTitle("Yacht Dice - " + currentPlayer + "'s Turn");
+    }
+
+    private void updateButtonState() {
+        // 현재 턴이 내 턴인지 확인
+        boolean isMyTurn = (game.getCurrentTurn() == 0 && playerRole.equals("P1")) ||
+                (game.getCurrentTurn() == 1 && playerRole.equals("P2"));
+
+        // 내 턴일 때만 버튼 활성화
+        rollButton.setEnabled(isMyTurn && game.getRollsLeft() > 0);
+        submitScoreButton.setEnabled(isMyTurn && !game.isScoreSubmitted());
+
+        // 체크박스도 턴에 따라 활성화/비활성화
+        for (JCheckBox checkbox : keepCheckboxes) {
+            checkbox.setEnabled(isMyTurn);
+        }
+
+        // 턴 표시 업데이트
+        updateTurnIndicator();
     }
 
     // 주사위 패널 설정
@@ -196,6 +262,11 @@ public class GameGUI {
 
     // 주사위 굴리기 함수
     private void rollDice () {
+        if (!canPerformAction()) {
+            JOptionPane.showMessageDialog(frame, "It's not your turn!");
+            return;
+        }
+
         if (game.getRollsLeft() <= 0) {
             JOptionPane.showMessageDialog(frame, "No rolls left! Submit your score or reset the turn.");
             return; // 남은 주사위가 없으면 경고 메시지 출력
@@ -242,6 +313,11 @@ public class GameGUI {
 
     // 점수 제출 함수
     private void submitScore() {
+        if (!canPerformAction()) {
+            JOptionPane.showMessageDialog(frame, "It's not your turn!");
+            return;
+        }
+
         if (game.isScoreSubmitted()) { // 점수를 제출했는데 또 제출하려는지 확인
             JOptionPane.showMessageDialog(frame, "You already submitted the score.");
             return;
@@ -249,6 +325,13 @@ public class GameGUI {
 
         int selectedRow = scoreCardTable.getSelectedRow(); // 선택된 행
         int selectedColumn = scoreCardTable.getSelectedColumn(); // 선택된 열
+
+        int expectedColumn = (game.getCurrentTurn() == 0) ? 1 : 2;
+        if (selectedColumn != expectedColumn) {
+            JOptionPane.showMessageDialog(frame,
+                    "Please select your own column (P" + (game.getCurrentTurn() + 1) + ")");
+            return;
+        }
 
         if (selectedRow == -1 || (selectedColumn != 1 && selectedColumn != 2)) {
             JOptionPane.showMessageDialog(frame, "Please select a valid category.");
@@ -297,12 +380,23 @@ public class GameGUI {
 
         game.setScoreSubmitted(true); // 점수 제출 상태를 true로 설정
 
-        game.resetTurn(); // 턴 리셋
-        updateDiceImages(true); // dice0 이미지로 초기화
-
         // 모든 칸이 채워졌는지 확인
         if (isGameOver()) {
             announceWinner(); // 승자 확인 및 표시
+        }
+        else{
+            game.nextTurn(); // 다음 플레이어로 턴 전환
+
+            updateTurnIndicator(); // 턴 전환 시 UI 업데이트
+            updateButtonState();
+
+            updateDiceImages(true); // dice0 이미지로 초기화
+
+            // 턴 전환 메시지 전송 (네트워크)
+            sendMessage("TURN_CHANGE:" + game.getCurrentTurn());
+
+            String message = "Turn changed to Player " + (game.getCurrentTurn() == 0 ? "1" : "2");
+            JOptionPane.showMessageDialog(frame, message);
         }
     }
 
@@ -338,7 +432,24 @@ public class GameGUI {
         submitScoreButton.setEnabled(false);
     }
 
-    public static void main (String[] args){
-        new GameGUI();
+    public void setPlayerRole(String role) {
+        this.playerRole = role;
+
+        // Update name labels based on player role
+        if (role.equals("P1")) {
+            playerNameLabel.setText("P1: " + playerName);
+            opponentNameLabel.setText("P2: " + opponentName);
+        } else if (role.equals("P2")) {
+            playerNameLabel.setText("P2: " + playerName);
+            opponentNameLabel.setText("P1: " + opponentName);
+        }
+
+        updateButtonState();
+    }
+
+    public void sendMessage(String message) {
+        if (out != null) {
+            out.println(message);
+        }
     }
 }
