@@ -34,6 +34,3 @@ public class LobbyServer {
         clients.remove(client);
     }
 }
-
-
-

@@ -42,7 +42,7 @@ public class YachtClient {
 
     private void startSinglePlay() {
         System.out.println("Starting SinglePlay mode...");
-      //  SwingUtilities.invokeLater(GameGUI::new); // 로컬 게임 GUI 실행
+        SwingUtilities.invokeLater(SingleGameGUI::new); // 로컬 게임 GUI 실행
         // single 만들어두신거 연결하기
     }
 
@@ -55,9 +55,9 @@ public class YachtClient {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            sendMessage("YachtClient joined the server."); // 여기까진 서버에게 전달 됐dma.
+            sendMessage("YachtClient joined the server.");
             System.out.println("Connected to server!");
-            // 여기 방 구현 이상함
+
             String serverMessage1 = readMessage();
             int handlernum = Integer.parseInt(serverMessage1.split(" ")[1]);
             if(handlernum==1){
@@ -73,14 +73,15 @@ public class YachtClient {
         }
     }
 
-    private void startMultiPlay(int roomId) {//여기가문제
+    private void startMultiPlay(int roomId) {
         sendMessage("JOIN_ROOM "+roomId);; // 방에 참여하기
         try {
             String serverMessage;
             while ((serverMessage = readMessage()) != null) {
-                System.out.println("Server: " + serverMessage); //여기가 안뜸
+                System.out.println("Server: " + serverMessage);
                 if (serverMessage.contains("Game is starting")) {
-                    SwingUtilities.invokeLater(() -> new GameGUI(in, out));
+
+                    //SwingUtilities.invokeLater(() -> new MultiGameGUI(in, out));
                     break;
                 }
             }
@@ -119,4 +120,3 @@ public class YachtClient {
         new YachtClient();
     }
 }
-

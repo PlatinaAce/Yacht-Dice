@@ -1,3 +1,4 @@
+
 import java.util.Arrays;
 
 class Game {
@@ -135,19 +136,24 @@ class Game {
         scoreSubmitted = submitted;
     }
 
-    // 턴을 리셋하는 메서드
-    public void resetTurn() {
-        rollsLeft = 3; // 남은 주사위 굴리기 횟수를 3으로 초기화
-    }
     // 현재 턴을 반환하는 메서드
     public int getCurrentTurn() {
         return currentTurn;  // 0 = P1, 1 = P2
     }
+    public void setcurrentTurn(){
+        this.currentTurn = (this.currentTurn + 1) % 2;
+    }
+
     // 턴을 넘기는 메서드 (다음 플레이어로 턴을 전환)
-    public void nextTurn() {
+    public void nextTurn() { // 이건 정상적으로 작동하는듯
         currentTurn = (currentTurn == 0) ? 1 : 0;  // 턴을 0에서 1로, 1에서 0으로 전환
-        // 턴 전환 후 출력
-        System.out.println("Turn switched! Current turn: " + (currentTurn == 0 ? "P1" : "P2"));
+        rollsLeft = 3;  // 새 턴에서는 주사위 굴리기 횟수 초기화
+       // System.out.println("Turn switched! Current turn: " + (currentTurn == 0 ? "P1" : "P2")); // 턴 전환 후 출력차피확인용이니까~
+    }
+
+    // 턴을 리셋하는 메서드 (싱글플레이 전용)
+    public void resetTurn() {
+        rollsLeft = 3; // 남은 주사위 굴리기 횟수를 3으로 초기화
     }
 
 }
