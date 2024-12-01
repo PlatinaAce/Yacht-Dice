@@ -408,7 +408,7 @@ public class MultiGameGUI {
            // game.nextTurn(); // 다음 플레이어로 턴 전환  // 아!!! 이게 하나의 gui에서만 되나바....아미쳤다
 
             updateTurnIndicator(); // 턴 전환 시 UI 업데이트
-            updateButtonState();
+           // updateButtonState();
 
             updateDiceImages(true); // dice0 이미지로 초기화
 
@@ -421,6 +421,7 @@ public class MultiGameGUI {
 
     public void myGameTurnUpdate(){
         game.nextTurn();
+        game.setScoreSubmitted(false); // 점수 제출 상태를 fasle로 설정(turn 넘어갔으니까)
     }
 
     // 모든 점수가 채워졌는지 확인
