@@ -13,6 +13,8 @@ public class ClientHandler extends Thread {
     private BufferedReader in;
     private int playerId;
     private int chCount=0;
+    private GameRoom gameRoom;
+    private MultiGameGUI mgui;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -32,14 +34,19 @@ public class ClientHandler extends Thread {
             while ((message = in.readLine()) != null) {
                 System.out.println("Received: " + message); // 여기까지 전달됐음. Received: YachtClient joined the server.
                 out.println("Handler_num: " + chCount);
-                if (message.equals("CREATE_ROOM")) {
-                    int roomId = YachtServer.createRoom();
-                    out.println("ROOM_CREATED " + roomId);
+                if(message.equals("NEXT_TURN")){
+                    String[] parts = message.split(" ");
+                    int turn = Integer.parseInt(parts[1]);
+                    mgui.updateButtonState();
+                    //gameRoom.updateTurn( ); //그래야 여기가 되는데.. gameRoom 이 전달안받아짐-->됨! 아 이게 안되네 ㅋㅋㅋㅋ여기네
+                } else if (message.equals("CREATE_ROOM")) { // 여기서 각자만들면 안됨..
+                    //int roomId = YachtServer.createRoom();
+                   // out.println("ROOM_CREATED " + roomId);
                 } else if (message.startsWith("JOIN_ROOM")) {
                     int roomId = Integer.parseInt(message.split(" ")[1]);
                     GameRoom room = YachtServer.getRoom(roomId);
                     if (room != null) {
-                        playerId = room.addPlayer(this); // 플레이어 ID 할당
+                       // playerId = room.addPlayer(this); // 플레이어 ID 할당
                         out.println("JOINED_ROOM " + roomId);
                         room.broadcast("Player " + playerId + " joined the room.");
                     } else {
@@ -77,5 +84,11 @@ public class ClientHandler extends Thread {
             out.println(message);
         }
     }
-}
 
+    public void setGameRoom(GameRoom gameRoom){ // 이게 잘 셋이 안되나바 ㅇㅇ여기임
+        this.gameRoom = gameRoom;
+    }
+    public void setGUI(MultiGameGUI mgui){
+        this.mgui = mgui;
+    }
+}
