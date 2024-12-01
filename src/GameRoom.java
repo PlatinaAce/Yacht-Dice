@@ -74,22 +74,22 @@ public class GameRoom {
     // 플레이어에게 메시지를 전송하는 함수
     public synchronized void nextTurn() {
         currentTurn = (currentTurn + 1) % 2; // 턴을 P1 <-> P2로 전환
+        mgui1.myGameTurnUpdate();
+        mgui1.updateButtonState();
+        mgui2.myGameTurnUpdate();
+        mgui2.updateButtonState();
         // 플레이어에게 턴을 알려줌
         if (currentTurn == 0) {
             clientHandler1.sendMessage("NEXT_TURN 1"); // P1의 차례
             clientHandler2.sendMessage("NEXT_TURN 2"); // P2는 기다림
-            mgui1.myGameUpdate();
-            mgui1.updateButtonState();
-            mgui2.myGameUpdate();
-            mgui2.updateButtonState();
         } else {
             clientHandler1.sendMessage("NEXT_TURN 2"); // P1은 기다림
             clientHandler2.sendMessage("NEXT_TURN 1"); // P2의 차례
-            mgui1.myGameUpdate();
-            mgui1.updateButtonState();
-            mgui2.myGameUpdate();
-            mgui2.updateButtonState();
         }
+    }
+    public synchronized void scoreUpdate(){
+        mgui1.myGameScoreUpdate();
+        mgui2.myGameScoreUpdate();
     }
 
     public ClientHandler getClientHandler1(){
