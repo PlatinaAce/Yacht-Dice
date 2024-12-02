@@ -17,24 +17,41 @@ public class YachtServer {
         try {
             serverSocket = new ServerSocket(PORT);
             System.out.println("Waiting for clients...");
+
+            // 클라이언트를 저장할 리스트
+            List<ClientHandler> connectedClients = new ArrayList<>();
+
             while (true) {
+                // 클라이언트 연결 대기
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Client connected: " + clientSocket.getInetAddress()); // 여기까지 됨.
-                ClientHandler c = new ClientHandler(clientSocket);
-                c.start();
+                System.out.println("Client connected: " + clientSocket.getInetAddress());
+
+                // 클라이언트 핸들러 생성
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                connectedClients.add(clientHandler);
+                clientHandler.start();
+
+                // 두 명 연결되면 Room 생성
+                if (connectedClients.size() == 2) {
+                    System.out.println("Two clients connected. Creating a room...");
+                    GameRoom room = new GameRoom(connectedClients.get(0), connectedClients.get(1));
+
+                    // 다음 방을 위해 리스트 초기화
+                    connectedClients.clear();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static synchronized int createRoom() {
+    /*public static synchronized int createRoom() {
         int roomId = nextRoomId++;
         GameRoom newRoom = new GameRoom(roomId);
         rooms.put(roomId, newRoom);
         System.out.println("Room " + roomId + " created.");
         return roomId;
-    }
+    }*/
 
     public static synchronized GameRoom getRoom(int roomId) {
         return rooms.get(roomId);
@@ -49,4 +66,3 @@ public class YachtServer {
         }
     }
 }
-

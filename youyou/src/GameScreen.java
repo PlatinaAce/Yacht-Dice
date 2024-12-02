@@ -1,3 +1,4 @@
+
 import javax.swing.*; // JFrame, JLabel, JTextField 등 Swing 요소
 import java.awt.*;    // Color, Font, Layout 관련 요소
 import java.awt.event.*; // ActionListener 등 이벤트 관련 요소
