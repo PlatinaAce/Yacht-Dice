@@ -4,8 +4,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
 
 public class MultiGameGUI {
     private JFrame frame;
@@ -22,18 +20,12 @@ public class MultiGameGUI {
     private String opponentName = "";
     private boolean isMyTurn = false;  // 내 차례인지 여부를 나타내는 변수
     private String playerRole = ""; // 현재 유저가 P1인지 P2인지 구분할 변수
-    private PrintWriter out;
-    private BufferedReader in;
-    private ClientHandler clientHandler1;
-    private ClientHandler clientHandler2;
     private GameRoom gameRoom;
     public MultiGameGUI(GameRoom gameRoom, ClientHandler clientHandler) {
         this.gameRoom = gameRoom;
         if(gameRoom.counthihi==0) this.playerRole="P1";
         else this.playerRole="P2";
         game = new Game();
-        //game.nextTurn();
-        //gameRoom.updateTurn(1); 아 생성될때 넣으면 안됨. 아닌가?
         scoresLocked = new boolean[15]; // 점수 잠금 배열
         scoresLocked[6] = true;
         scoresLocked[7] = true;
@@ -133,10 +125,10 @@ public class MultiGameGUI {
         frame.setTitle("Im "+this.playerRole+" / "+currentPlayer+"'s turn");
     }
 
-    public void updateButtonState() {  //걍 퍼블릭으로
+    public void updateButtonState() { // gameRoom에서 써야하므로 public
         // 현재 턴이 내 턴인지 확인
-       boolean isMyTurn = (game.getCurrentTurn() == 0 && playerRole.equals("P1")) ||
-              (game.getCurrentTurn() == 1 && playerRole.equals("P2"));
+        boolean isMyTurn = (game.getCurrentTurn() == 0 && playerRole.equals("P1")) ||
+                (game.getCurrentTurn() == 1 && playerRole.equals("P2"));
 
         // 내 턴일 때만 버튼 활성화
         rollButton.setEnabled(isMyTurn && game.getRollsLeft() > 0);
@@ -146,7 +138,6 @@ public class MultiGameGUI {
         for (JCheckBox checkbox : keepCheckboxes) {
             checkbox.setEnabled(isMyTurn);
         }
-
         // 턴 표시 업데이트
         updateTurnIndicator();
     }
@@ -215,6 +206,9 @@ public class MultiGameGUI {
             }
         };
 
+        int playerWindow;
+        if(playerRole=="P2")playerWindow=2;
+        else playerWindow=1;
         scoreCardTable = new JTable(tableModel);
         scoreCardTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -222,7 +216,7 @@ public class MultiGameGUI {
                 Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
                 // P1 칸(column == 1)에서만 색상 처리
-                if (column == 1) {
+                if (column == playerWindow) {
                     // Subtotal, +35 Bonus, Total 칸은 항상 흰색
                     if (row == 6 || row == 7 || row == 14) {
                         cell.setBackground(Color.WHITE);
@@ -286,7 +280,7 @@ public class MultiGameGUI {
         game.rollDice(keepFlags); // 주사위 굴리기
         game.calculateScores(); // 점수 계산
 
-        gameRoom.scoreUpdate();
+       gameRoom.scoreUpdate();
 //        updateDiceImages(false); // 실제 주사위 값으로 이미지 업데이트
 //        updateScoreTable(); // 점수표 업데이트
     }
@@ -337,7 +331,6 @@ public class MultiGameGUI {
             JOptionPane.showMessageDialog(frame, "It's not your turn!");
             return;
         }
-
         if (game.isScoreSubmitted()) { // 점수를 제출했는데 또 제출하려는지 확인
             JOptionPane.showMessageDialog(frame, "You already submitted the score.");
             return;
@@ -357,12 +350,10 @@ public class MultiGameGUI {
             JOptionPane.showMessageDialog(frame, "Please select a valid category.");
             return;
         }
-
         if (scoresLocked[selectedRow]) {
             JOptionPane.showMessageDialog(frame, "You cannot submit here!");
             return;
         }
-
         Object scoreValue = tableModel.getValueAt(selectedRow, selectedColumn);
         if (scoreValue == null || scoreValue.toString().isEmpty()) {
             JOptionPane.showMessageDialog(frame, "You cannot submit here!");
@@ -376,6 +367,9 @@ public class MultiGameGUI {
 
         // Game 클래스의 Subtotal 및 Total 업데이트
         game.calculateTotal(scoresLocked);
+
+        Game currentGame = game;
+       // gameRoom.scoreUpdate(currentGame);
         updateTotalTable(); // 점수표 갱신
 
         // 점수 입력 후 해당 셀을 회색으로 처리
@@ -405,10 +399,10 @@ public class MultiGameGUI {
             announceWinner(); // 승자 확인 및 표시
         }
         else{
-           // game.nextTurn(); // 다음 플레이어로 턴 전환  // 아!!! 이게 하나의 gui에서만 되나바....아미쳤다
+            // game.nextTurn(); // 다음 플레이어로 턴 전환  // 아!!! 이게 하나의 gui에서만 되나바....아미쳤다
 
             updateTurnIndicator(); // 턴 전환 시 UI 업데이트
-           // updateButtonState();
+            // updateButtonState();
 
             updateDiceImages(true); // dice0 이미지로 초기화
 
